@@ -1,0 +1,60 @@
+{% extends 'core/base.html' %}
+
+{% load static chatextras %}
+
+{% block content %}
+    <h1 class="text-2xl">Room "{{ room.uuid }}"</h1>
+
+    <hr class="my-6">
+
+    <p class="mb-6">
+        <b>Name: </b>{{ room.client }}<br>
+        <b>Started: </b>{{ room.created_at|timesince }} ago<br>
+        <b>Status: </b>{{ room.get_status_display }}<br>
+        <b>Page: </b>{{ room.url }}<br>
+        <b>Agent: </b>{% firstof room.agent.name 'None yet...' %}
+    </p>
+
+    <hr class="mb-6">
+
+    <div id="chat_log" class="mb-4 p-4 bg-gray-100 rounded-xl h-[300px] overflow-scroll flex flex-col flex-grow">
+        {% for message in room.messages.all %}
+            <div class="flex w-full max-w-md mt-2 space-x-3 {% if message.created_by %}ml-auto justify-end{% endif %}">
+                {% if not message.created_by %}
+                    <div class="flex-shrink-0 h-10 w-10 rounded-full bg-gray-200 text-center pt-2">
+                        {{ message.sent_by|initials }}
+                    </div>
+                {% endif %}
+
+                <div>
+                    <div class="p-4 rounded-xl {% if message.created_by %}bg-blue-600 text-white{% else %}bg-gray-300{% endif %}">
+                        <p class="text-sm">{{ message.body }}</p>
+                    </div>
+
+                    <span class="text-xs text-gray-500 leading-none">{{ message.created_at|timesince }} ago</span>
+                </div>
+
+                {% if message.created_by %}
+                    <div class="flex-shrink-0 h-10 w-10 rounded-full bg-gray-200 text-center pt-2">
+                        {{ message.sent_by|initials }}
+                    </div>
+                {% endif %}
+            </div>
+        {% endfor %}
+    </div>
+
+    {% if room.status == 'active' %}
+        <input type="text" name="body" id="chat_message_input" class="w-full mb-4 p-4 bg-gray-100 rounded-xl" placeholder="Type your message...">
+        <button id="chat_message_submit" class="py-2 px-6 bg-rose-600 text-white rounded-xl">Send</button>
+    {% endif %}
+{% endblock %}
+
+{% block scripts %}
+    {% if room.status == 'active' %}
+        {{ room.uuid|json_script:'room_uuid' }}
+        {{ request.user.name|json_script:'user_name' }}
+        {{ request.user.id|json_script:'user_id' }}
+
+        <script src="{% static 'js/main_admin.js' %}"></script>
+    {% endif %}
+{% endblock %}
